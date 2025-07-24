@@ -20,36 +20,31 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email and password required")
         }
 
-        // Test users for development
-        const testUsers = {
-          "carowner@test.com": {
-            id: "car-owner-1",
-            email: "carowner@test.com",
-            name: "John Doe",
-            role: "CAR_OWNER" as UserRole,
-            password: "password123"
-          },
-          "shopowner@test.com": {
-            id: "shop-owner-1", 
-            email: "shopowner@test.com",
-            name: "Sarah Wilson",
-            role: "SHOP_OWNER" as UserRole,
-            password: "password123"
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          })
+
+          if (!user || !user.password) {
+            throw new Error("Invalid credentials")
           }
-        }
 
-        const testUser = testUsers[credentials.email as keyof typeof testUsers]
-        
-        if (!testUser || testUser.password !== credentials.password) {
+          const isValid = await bcrypt.compare(credentials.password, user.password)
+
+          if (!isValid) {
+            throw new Error("Invalid credentials")
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            image: user.image,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           throw new Error("Invalid credentials")
-        }
-
-        return {
-          id: testUser.id,
-          email: testUser.email,
-          name: testUser.name,
-          role: testUser.role,
-          image: null,
         }
       }
     })
@@ -78,6 +73,12 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       // All sign-ins go through credentials provider
       return true
+    },
+    async redirect({ url, baseUrl }) {
+      // Ensure redirects always go to the correct port
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      if (url.startsWith(baseUrl)) return url
+      return baseUrl
     }
   }
 }

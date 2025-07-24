@@ -10,72 +10,123 @@ export async function GET(request: NextRequest) {
     const lat = searchParams.get('lat')
     const lng = searchParams.get('lng')
     const radius = searchParams.get('radius') || '10' // Default 10km radius
+    const search = searchParams.get('search')
+    const priceRange = searchParams.get('priceRange')
+    const serviceType = searchParams.get('serviceType')
 
-    // For now, return mock data - will be replaced with real database queries
-    const mockShops = [
-      {
-        id: '1',
-        name: 'Premium Auto Spa',
-        description: 'Professional car washing and detailing services',
-        address: '123 Main Street, City Center',
-        latitude: 12.9716,
-        longitude: 77.5946,
-        rating: 4.8,
-        totalReviews: 156,
-        priceRange: '₹199 - ₹699',
-        image: '/images/car.png',
-        services: [
-          { id: '1', name: 'Basic Wash', price: 199, duration: 30 },
-          { id: '2', name: 'Premium Wash', price: 399, duration: 45 },
-          { id: '3', name: 'Full Detail', price: 699, duration: 90 }
-        ],
-        openHours: '8:00 AM - 8:00 PM',
-        contactPhone: '+91 9876543210'
-      },
-      {
-        id: '2',
-        name: 'Quick Clean Station',
-        description: 'Fast and affordable car wash services',
-        address: '456 Park Avenue, Downtown',
-        latitude: 12.9716,
-        longitude: 77.5946,
-        rating: 4.5,
-        totalReviews: 89,
-        priceRange: '₹149 - ₹399',
-        image: '/images/car.png',
-        services: [
-          { id: '4', name: 'Express Wash', price: 149, duration: 20 },
-          { id: '5', name: 'Standard Wash', price: 249, duration: 35 },
-          { id: '6', name: 'Premium Clean', price: 399, duration: 50 }
-        ],
-        openHours: '7:00 AM - 9:00 PM',
-        contactPhone: '+91 9876543211'
-      },
-      {
-        id: '3',
-        name: 'Luxury Car Care',
-        description: 'High-end car detailing and premium services',
-        address: '789 Business District, Tech Park',
-        latitude: 12.9716,
-        longitude: 77.5946,
-        rating: 4.9,
-        totalReviews: 234,
-        priceRange: '₹399 - ₹999',
-        image: '/images/car.png',
-        services: [
-          { id: '7', name: 'Luxury Wash', price: 499, duration: 60 },
-          { id: '8', name: 'Premium Detail', price: 799, duration: 120 },
-          { id: '9', name: 'Executive Package', price: 999, duration: 150 }
-        ],
-        openHours: '9:00 AM - 7:00 PM',
-        contactPhone: '+91 9876543212'
+    // Build filter conditions
+    let whereConditions: any = {}
+
+    // Add search filter
+    if (search) {
+      whereConditions.OR = [
+        { businessName: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { 
+          services: {
+            some: {
+              name: { contains: search, mode: 'insensitive' }
+            }
+          }
+        }
+      ]
+    }
+
+    // Fetch shops from database with their services
+    const shops = await prisma.shopOwner.findMany({
+      where: whereConditions,
+      include: {
+        user: {
+          select: {
+            name: true,
+            phone: true
+          }
+        },
+        services: {
+          where: {
+            isActive: true
+          },
+          select: {
+            id: true,
+            name: true,
+            price: true,
+            duration: true,
+            description: true,
+            category: true
+          }
+        },
+        reviews: {
+          select: {
+            rating: true
+          }
+        }
       }
-    ]
+    })
+
+    // Transform data for frontend
+    const transformedShops = shops.map(shop => {
+      const totalReviews = shop.reviews.length
+      const averageRating = totalReviews > 0 
+        ? shop.reviews.reduce((sum, review) => sum + review.rating, 0) / totalReviews
+        : 0
+
+      const prices = shop.services.map(s => s.price)
+      const minPrice = prices.length > 0 ? Math.min(...prices) : 0
+      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0
+
+      return {
+        id: shop.id,
+        name: shop.businessName,
+        description: shop.description || 'Professional car wash services',
+        address: `${shop.address}, ${shop.city}, ${shop.state} ${shop.zipCode}`,
+        rating: Number(averageRating.toFixed(1)),
+        totalReviews,
+        priceRange: prices.length > 0 ? `₹${minPrice} - ₹${maxPrice}` : 'Contact for pricing',
+        image: '/images/car.png', // Default image for now
+        services: shop.services.map(service => ({
+          id: service.id,
+          name: service.name,
+          price: service.price,
+          duration: service.duration,
+          description: service.description,
+          category: service.category
+        })),
+        contactPhone: shop.phone,
+        isVerified: shop.isVerified
+      }
+    })
+
+    // Apply additional client-side filters
+    let filteredShops = transformedShops
+
+    // Filter by price range
+    if (priceRange && priceRange !== 'all') {
+      filteredShops = filteredShops.filter(shop => {
+        const minPrice = Math.min(...shop.services.map(s => s.price))
+        switch (priceRange) {
+          case 'low': return minPrice < 300
+          case 'medium': return minPrice >= 300 && minPrice < 500
+          case 'high': return minPrice >= 500
+          default: return true
+        }
+      })
+    }
+
+    // Filter by service type
+    if (serviceType && serviceType !== 'all') {
+      filteredShops = filteredShops.filter(shop => 
+        shop.services.some(service => 
+          service.category.toLowerCase() === serviceType.toLowerCase()
+        )
+      )
+    }
 
     return NextResponse.json({ 
       success: true, 
-      shops: mockShops,
-      total: mockShops.length 
+      shops: filteredShops,
+      total: filteredShops.length 
     })
 
   } catch (error) {

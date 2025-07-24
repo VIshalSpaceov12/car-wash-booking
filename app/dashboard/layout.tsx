@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { signOut } from 'next-auth/react'
 import { Car, Store, LogOut, User, Bell, Settings } from 'lucide-react'
+import Link from 'next/link'
 
 export default function DashboardLayout({
   children,
@@ -81,7 +82,7 @@ export default function DashboardLayout({
             </Button>
 
             {/* User Profile */}
-            <div className="flex items-center gap-3">
+            <Link href="/dashboard/profile" className="flex items-center gap-3 hover:bg-gray-700 rounded-lg p-2 transition-colors">
               <div className="text-right">
                 <p className="text-sm font-medium text-white">{session.user.name}</p>
                 <p className="text-xs text-gray-400">{session.user.email}</p>
@@ -89,11 +90,14 @@ export default function DashboardLayout({
               <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
                 <User className="w-4 h-4 text-white" />
               </div>
-            </div>
+            </Link>
 
             {/* Sign Out */}
             <Button
-              onClick={() => signOut({ callbackUrl: '/' })}
+              onClick={async () => {
+                await signOut({ redirect: false })
+                window.location.href = '/'
+              }}
               variant="ghost"
               size="sm"
               className="text-gray-300 hover:text-white hover:bg-gray-700"

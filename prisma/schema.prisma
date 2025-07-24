@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,43 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  CAR_OWNER
-  SHOP_OWNER
-  ADMIN
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String     @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String     @unique
   emailVerified DateTime?
   image         String?
   phone         String?
   password      String?
-  role          UserRole  @default(CAR_OWNER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  // Relations
+  role          UserRole   @default(CAR_OWNER)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
   accounts      Account[]
-  sessions      Session[]
   carOwner      CarOwner?
+  sessions      Session[]
   shopOwner     ShopOwner?
 
   @@map("users")
@@ -58,15 +32,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -92,142 +65,149 @@ model VerificationToken {
 }
 
 model CarOwner {
-  id        String   @id @default(cuid())
-  userId    String   @unique
+  id        String    @id @default(cuid())
+  userId    String    @unique
   address   String?
   city      String?
   state     String?
   zipCode   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vehicles Vehicle[]
-  bookings Booking[]
-  reviews  Review[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviews   Review[]
+  vehicles  Vehicle[]
 
   @@map("car_owners")
 }
 
 model ShopOwner {
-  id          String   @id @default(cuid())
-  userId      String   @unique
+  id           String    @id @default(cuid())
+  userId       String    @unique
   businessName String
-  description String?
-  address     String
-  city        String
-  state       String
-  zipCode     String
-  phone       String
-  isVerified  Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  services Service[]
-  bookings Booking[]
-  reviews  Review[]
+  description  String?
+  address      String
+  city         String
+  state        String
+  zipCode      String
+  phone        String
+  isVerified   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  bookings     Booking[]
+  reviews      Review[]
+  services     Service[]
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("shop_owners")
 }
 
 model Vehicle {
-  id         String   @id @default(cuid())
-  carOwnerId String
-  make       String
-  model      String
-  year       Int
-  color      String?
-  plateNumber String? @unique
-  vehicleType String // car, bike, truck, etc.
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relations
-  carOwner CarOwner  @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
-  bookings Booking[]
+  id          String    @id @default(cuid())
+  carOwnerId  String
+  make        String
+  model       String
+  year        Int
+  color       String?
+  plateNumber String?   @unique
+  vehicleType String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookings    Booking[]
+  carOwner    CarOwner  @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
 
   @@map("vehicles")
 }
 
 model Service {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   shopOwnerId String
   name        String
   description String?
   price       Float
-  duration    Int // in minutes
+  duration    Int
   category    String
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  shopOwner ShopOwner @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
-  bookings  Booking[]
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookings    Booking[]
+  shopOwner   ShopOwner @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
 
   @@map("services")
 }
 
 model Booking {
-  id            String        @id @default(cuid())
-  carOwnerId    String
-  shopOwnerId   String
-  serviceId     String
-  vehicleId     String
-  scheduledAt   DateTime
-  completedAt   DateTime?
-  status        BookingStatus @default(PENDING)
-  totalAmount   Float
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Relations
-  carOwner  CarOwner  @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
-  shopOwner ShopOwner @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
-  service   Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  vehicle   Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-  payment   Payment?
-  review    Review?
+  id          String        @id @default(cuid())
+  carOwnerId  String
+  shopOwnerId String
+  serviceId   String
+  vehicleId   String
+  scheduledAt DateTime
+  completedAt DateTime?
+  status      BookingStatus @default(PENDING)
+  totalAmount Float
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  carOwner    CarOwner      @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
+  service     Service       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  shopOwner   ShopOwner     @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle       @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  payment     Payment?
+  review      Review?
 
   @@map("bookings")
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  bookingId       String        @unique
-  amount          Float
-  currency        String        @default("INR")
-  status          PaymentStatus @default(PENDING)
-  paymentMethod   String?
-  transactionId   String?       @unique
-  paymentGateway  String? // razorpay, stripe, etc.
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-
-  // Relations
-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  bookingId      String        @unique
+  amount         Float
+  currency       String        @default("INR")
+  status         PaymentStatus @default(PENDING)
+  paymentMethod  String?
+  transactionId  String?       @unique
+  paymentGateway String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  booking        Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
 model Review {
-  id          String   @id @default(cuid())
-  bookingId   String   @unique
+  id          String    @id @default(cuid())
+  bookingId   String    @unique
   carOwnerId  String
   shopOwnerId String
-  rating      Int // 1-5
+  rating      Int
   comment     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Relations
-  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  carOwner  CarOwner  @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
-  shopOwner ShopOwner @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  carOwner    CarOwner  @relation(fields: [carOwnerId], references: [id], onDelete: Cascade)
+  shopOwner   ShopOwner @relation(fields: [shopOwnerId], references: [id], onDelete: Cascade)
 
   @@map("reviews")
+}
+
+enum UserRole {
+  CAR_OWNER
+  SHOP_OWNER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
 }

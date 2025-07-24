@@ -14,6 +14,14 @@
 - Glass morphism design
 - Authentication system
 - Protected routing
+- Landing page with role selection (Shop Owner vs Car/Bike Owner)
+- Role-based authentication flow with dedicated pages
+- Complete database schema with Prisma ORM
+- Responsive UI with Tailwind CSS + ShadCN components
+- Protected dashboard layout with middleware
+- Basic Car Owner and Shop Owner dashboards
+- API endpoints for core functionality
+
 
 ## Tech Stack
 Next.js 15.4.3, NextAuth.js, Prisma, PostgreSQL, Tailwind CSS v3.4.17, TypeScript

@@ -20,72 +20,128 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // Mock bookings data - will be replaced with real database queries
-    const mockBookings = [
-      {
-        id: '1',
-        customerId: session.user.id,
-        customerName: session.user.name,
-        shopId: '1',
-        shopName: 'Premium Auto Spa',
-        serviceId: '2',
-        serviceName: 'Premium Wash',
-        date: '2024-01-22',
-        time: '10:00 AM',
-        status: 'upcoming',
-        price: 399,
-        notes: 'Please wash the exterior thoroughly',
-        createdAt: '2024-01-20T10:00:00Z',
-        updatedAt: '2024-01-20T10:00:00Z'
-      },
-      {
-        id: '2',
-        customerId: session.user.id,
-        customerName: session.user.name,
-        shopId: '2',
-        shopName: 'Quick Clean Station',
-        serviceId: '5',
-        serviceName: 'Standard Wash',
-        date: '2024-01-18',
-        time: '2:00 PM',
-        status: 'completed',
-        price: 249,
-        notes: '',
-        createdAt: '2024-01-15T14:00:00Z',
-        updatedAt: '2024-01-18T15:00:00Z'
-      },
-      {
-        id: '3',
-        customerId: session.user.id,
-        customerName: session.user.name,
-        shopId: '3',
-        shopName: 'Luxury Car Care',
-        serviceId: '8',
-        serviceName: 'Premium Detail',
-        date: '2024-01-25',
-        time: '11:00 AM',
-        status: 'confirmed',
-        price: 799,
-        notes: 'Full interior and exterior detailing',
-        createdAt: '2024-01-21T09:00:00Z',
-        updatedAt: '2024-01-21T09:00:00Z'
+    // Get user's bookings from database
+    let whereClause: any = {}
+    
+    if (session.user.role === 'CAR_OWNER') {
+      // For car owners, get their bookings
+      const carOwner = await prisma.carOwner.findUnique({
+        where: { userId: session.user.id }
+      })
+      if (!carOwner) {
+        return NextResponse.json({
+          success: true,
+          bookings: [],
+          total: 0,
+          hasMore: false
+        })
       }
-    ]
-
-    // Filter by status if provided
-    let filteredBookings = mockBookings
-    if (status) {
-      filteredBookings = mockBookings.filter(booking => booking.status === status)
+      whereClause.carOwnerId = carOwner.id
+    } else if (session.user.role === 'SHOP_OWNER') {
+      // For shop owners, get bookings for their shop
+      const shopOwner = await prisma.shopOwner.findUnique({
+        where: { userId: session.user.id }
+      })
+      if (!shopOwner) {
+        return NextResponse.json({
+          success: true,
+          bookings: [],
+          total: 0,
+          hasMore: false
+        })
+      }
+      whereClause.shopOwnerId = shopOwner.id
     }
 
-    // Apply pagination
-    const paginatedBookings = filteredBookings.slice(offset, offset + limit)
+    // Add status filter if provided
+    if (status) {
+      whereClause.status = status.toUpperCase()
+    }
+
+    // Fetch bookings from database
+    const bookings = await prisma.booking.findMany({
+      where: whereClause,
+      include: {
+        carOwner: {
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true
+              }
+            }
+          }
+        },
+        shopOwner: {
+          select: {
+            businessName: true,
+            address: true,
+            city: true,
+            state: true,
+            phone: true
+          }
+        },
+        service: {
+          select: {
+            name: true,
+            description: true,
+            price: true,
+            duration: true
+          }
+        },
+        vehicle: {
+          select: {
+            make: true,
+            model: true,
+            year: true,
+            color: true
+          }
+        }
+      },
+      orderBy: {
+        scheduledAt: 'desc'
+      },
+      skip: offset,
+      take: limit
+    })
+
+    // Transform bookings for frontend
+    const transformedBookings = bookings.map(booking => ({
+      id: booking.id,
+      customerId: booking.carOwner.userId,
+      customerName: booking.carOwner.user.name,
+      customerEmail: booking.carOwner.user.email,
+      customerPhone: booking.carOwner.user.phone,
+      shopId: booking.shopOwnerId,
+      shopName: booking.shopOwner.businessName,
+      shopAddress: `${booking.shopOwner.address}, ${booking.shopOwner.city}, ${booking.shopOwner.state}`,
+      serviceId: booking.serviceId,
+      serviceName: booking.service.name,
+      serviceDescription: booking.service.description,
+      vehicle: booking.vehicle ? {
+        make: booking.vehicle.make,
+        model: booking.vehicle.model,
+        year: booking.vehicle.year,
+        color: booking.vehicle.color
+      } : null,
+      scheduledAt: booking.scheduledAt.toISOString(),
+      completedAt: booking.completedAt?.toISOString(),
+      status: booking.status.toLowerCase(),
+      totalAmount: booking.totalAmount,
+      notes: booking.notes,
+      createdAt: booking.createdAt.toISOString(),
+      updatedAt: booking.updatedAt.toISOString()
+    }))
+
+    const totalCount = await prisma.booking.count({ where: whereClause })
+    const paginatedBookings = transformedBookings
 
     return NextResponse.json({
       success: true,
       bookings: paginatedBookings,
-      total: filteredBookings.length,
-      hasMore: offset + limit < filteredBookings.length
+      total: totalCount,
+      hasMore: offset + limit < totalCount
     })
 
   } catch (error) {
@@ -127,71 +183,125 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate date is not in the past
-    const bookingDate = new Date(`${date} ${time}`)
-    if (bookingDate < new Date()) {
+    const bookingDateTime = new Date(`${date}T${time}`)
+    if (bookingDateTime < new Date()) {
       return NextResponse.json(
         { success: false, error: 'Cannot book for past dates' },
         { status: 400 }
       )
     }
 
-    // Mock service data (in real app, fetch from database)
-    const mockServices = {
-      '1': { name: 'Basic Wash', price: 199 },
-      '2': { name: 'Premium Wash', price: 399 },
-      '3': { name: 'Full Detail', price: 699 },
-      '4': { name: 'Express Wash', price: 149 },
-      '5': { name: 'Standard Wash', price: 249 },
-      '6': { name: 'Premium Clean', price: 399 },
-      '7': { name: 'Luxury Wash', price: 499 },
-      '8': { name: 'Premium Detail', price: 799 },
-      '9': { name: 'Executive Package', price: 999 }
-    }
+    try {
+      // Get car owner profile
+      const carOwner = await prisma.carOwner.findUnique({
+        where: { userId: session.user.id }
+      })
 
-    const mockShops = {
-      '1': 'Premium Auto Spa',
-      '2': 'Quick Clean Station',
-      '3': 'Luxury Car Care'
-    }
+      if (!carOwner) {
+        return NextResponse.json(
+          { success: false, error: 'Car owner profile not found' },
+          { status: 404 }
+        )
+      }
 
-    const service = mockServices[serviceId as keyof typeof mockServices]
-    const shopName = mockShops[shopId as keyof typeof mockShops]
+      // Verify service exists and get details
+      const service = await prisma.service.findUnique({
+        where: { id: serviceId },
+        include: {
+          shopOwner: {
+            select: {
+              id: true,
+              businessName: true
+            }
+          }
+        }
+      })
 
-    if (!service || !shopName) {
+      if (!service || !service.isActive) {
+        return NextResponse.json(
+          { success: false, error: 'Service not found or inactive' },
+          { status: 404 }
+        )
+      }
+
+      // Verify the service belongs to the specified shop
+      if (service.shopOwner.id !== shopId) {
+        return NextResponse.json(
+          { success: false, error: 'Service does not belong to specified shop' },
+          { status: 400 }
+        )
+      }
+
+      // Create a default vehicle for the car owner if none exists
+      let vehicle = await prisma.vehicle.findFirst({
+        where: { carOwnerId: carOwner.id }
+      })
+
+      if (!vehicle) {
+        vehicle = await prisma.vehicle.create({
+          data: {
+            carOwnerId: carOwner.id,
+            make: 'Default',
+            model: 'Vehicle',
+            year: new Date().getFullYear(),
+            vehicleType: 'car'
+          }
+        })
+      }
+
+      // Create the booking
+      const newBooking = await prisma.booking.create({
+        data: {
+          carOwnerId: carOwner.id,
+          shopOwnerId: shopId,
+          serviceId: serviceId,
+          vehicleId: vehicle.id,
+          scheduledAt: bookingDateTime,
+          status: 'CONFIRMED',
+          totalAmount: service.price,
+          notes: notes || null
+        },
+        include: {
+          service: {
+            select: {
+              name: true,
+              price: true
+            }
+          },
+          shopOwner: {
+            select: {
+              businessName: true
+            }
+          }
+        }
+      })
+
+      return NextResponse.json({
+        success: true,
+        booking: {
+          id: newBooking.id,
+          shopName: newBooking.shopOwner.businessName,
+          serviceName: newBooking.service.name,
+          scheduledAt: newBooking.scheduledAt.toISOString(),
+          status: newBooking.status.toLowerCase(),
+          totalAmount: newBooking.totalAmount,
+          notes: newBooking.notes
+        },
+        message: 'Booking created successfully'
+      })
+
+    } catch (error) {
+      console.error('Error creating booking:', error)
       return NextResponse.json(
-        { success: false, error: 'Invalid shop or service ID' },
-        { status: 400 }
+        { success: false, error: 'Failed to create booking' },
+        { status: 500 }
       )
     }
 
-    // Create new booking (mock data - in real app, save to database)
-    const newBooking = {
-      id: Date.now().toString(),
-      customerId: session.user.id,
-      customerName: session.user.name,
-      shopId,
-      shopName,
-      serviceId,
-      serviceName: service.name,
-      date,
-      time,
-      status: 'confirmed',
-      price: service.price,
-      notes: notes || '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-
-    return NextResponse.json({
-      success: true,
-      booking: newBooking,
-      message: 'Booking created successfully'
-    })
-
   } catch (error) {
-    console.error('Error creating booking:', error)
+    console.error('Error processing booking request:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to create booking' },
+      { success: false, error: 'Failed to process booking request' },
       { status: 500 }
     )
   }

@@ -13,6 +13,11 @@ export default withAuth(
           return !!token
         }
         
+        // Protect onboarding routes - require authentication
+        if (req.nextUrl.pathname.startsWith('/onboarding')) {
+          return !!token
+        }
+        
         // Allow all other routes
         return true
       },
