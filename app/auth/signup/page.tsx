@@ -110,7 +110,7 @@ export default function SignUpPage() {
             </p>
           </div>
 
-          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 shadow-2xl">
+          <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 shadow-2xl hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl text-center text-white">Sign Up</CardTitle>
               <CardDescription className="text-center text-gray-400">

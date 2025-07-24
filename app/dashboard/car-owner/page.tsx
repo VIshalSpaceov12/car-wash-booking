@@ -485,7 +485,7 @@ export default function CarOwnerDashboard() {
             {isLoading ? (
               // Loading skeleton
               [...Array(3)].map((_, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700">
+                <Card key={index} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader className="pb-3">
                     <div className="aspect-video bg-gray-700 rounded-lg mb-3 animate-pulse"></div>
                     <div className="space-y-2">
@@ -500,7 +500,7 @@ export default function CarOwnerDashboard() {
               ))
             ) : filteredShops.length > 0 ? (
               filteredShops.map((shop) => (
-                <Card key={shop.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-colors">
+                <Card key={shop.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader className="pb-3">
                     <div className="aspect-video bg-gray-700 rounded-lg mb-3 overflow-hidden">
                       <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
@@ -589,7 +589,7 @@ export default function CarOwnerDashboard() {
         <div className="space-y-6">
           <div className="grid gap-4">
             {bookings.map((booking) => (
-              <Card key={booking.id} className="bg-gray-800 border-gray-700">
+              <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">

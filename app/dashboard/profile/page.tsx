@@ -258,7 +258,7 @@ export default function ProfilePage() {
             </p>
           </div>
 
-          <Card className="bg-gray-900/5 backdrop-blur-2xl border-gray-700/20 shadow-2xl p-8 rounded-2xl">
+          <Card className="bg-gray-900/5 backdrop-blur-2xl border-gray-700/20 shadow-2xl p-8 rounded-2xl hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* User Info Section */}
             <div className="space-y-4 bg-transparent border border-gray-600/20 rounded-xl p-6">

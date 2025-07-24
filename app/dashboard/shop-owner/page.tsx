@@ -259,7 +259,7 @@ export default function ShopOwnerDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -273,7 +273,7 @@ export default function ShopOwnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -287,7 +287,7 @@ export default function ShopOwnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -301,7 +301,7 @@ export default function ShopOwnerDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
+        <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -379,7 +379,7 @@ export default function ShopOwnerDashboard() {
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Bookings */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
@@ -433,7 +433,7 @@ export default function ShopOwnerDashboard() {
           </Card>
 
           {/* Popular Services */}
-          <Card className="bg-gray-800 border-gray-700">
+          <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
             <CardHeader>
               <CardTitle className="text-white flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
@@ -493,7 +493,7 @@ export default function ShopOwnerDashboard() {
             {isLoading ? (
               // Loading skeleton
               [...Array(3)].map((_, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700">
+                <Card key={index} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardContent className="p-6 animate-pulse">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -514,7 +514,7 @@ export default function ShopOwnerDashboard() {
               ))
             ) : bookings.length > 0 ? (
               bookings.map((booking) => (
-                <Card key={booking.id} className="bg-gray-800 border-gray-700">
+                <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -590,7 +590,7 @@ export default function ShopOwnerDashboard() {
 
           {/* Add/Edit Service Form */}
           {isEditingService && (
-            <Card className="bg-gray-800 border-gray-700">
+            <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-white">
                   {editingServiceId ? 'Edit Service' : 'Add New Service'}
@@ -698,7 +698,7 @@ export default function ShopOwnerDashboard() {
             {isLoading ? (
               // Loading skeleton
               [...Array(3)].map((_, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700">
+                <Card key={index} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader className="animate-pulse">
                     <div className="flex items-center justify-between">
                       <div className="h-6 bg-gray-600 rounded w-24"></div>
@@ -727,7 +727,7 @@ export default function ShopOwnerDashboard() {
               ))
             ) : services.length > 0 ? (
               services.map((service) => (
-                <Card key={service.id} className="bg-gray-800 border-gray-700">
+                <Card key={service.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-white">{service.name}</CardTitle>
@@ -816,7 +816,7 @@ export default function ShopOwnerDashboard() {
           {businessProfile && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Business Information */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <Building className="w-5 h-5" />
@@ -881,7 +881,7 @@ export default function ShopOwnerDashboard() {
               </Card>
 
               {/* Location Information */}
-              <Card className="bg-gray-800 border-gray-700">
+              <Card className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <MapPin className="w-5 h-5" />
@@ -955,7 +955,7 @@ export default function ShopOwnerDashboard() {
               </Card>
 
               {/* Business Statistics */}
-              <Card className="bg-gray-800 border-gray-700 lg:col-span-2">
+              <Card className="bg-gray-800 border-gray-700 lg:col-span-2 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                 <CardHeader>
                   <CardTitle className="text-white flex items-center gap-2">
                     <BarChart3 className="w-5 h-5" />

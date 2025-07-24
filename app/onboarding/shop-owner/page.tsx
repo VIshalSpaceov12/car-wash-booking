@@ -200,7 +200,7 @@ export default function ShopOwnerOnboarding() {
           </div>
         </div>
 
-        <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 shadow-2xl">
+        <Card className="bg-gray-800/50 backdrop-blur-sm border-gray-700 shadow-2xl hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
           <CardContent className="p-8">
             {/* Step 1: Business Information */}
             {currentStep === 1 && (
