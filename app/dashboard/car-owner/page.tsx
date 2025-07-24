@@ -19,6 +19,7 @@ import {
   Heart,
   Zap
 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function CarOwnerDashboard() {
   const { data: session } = useSession()
@@ -288,6 +289,17 @@ export default function CarOwnerDashboard() {
           My Bookings
         </button>
         <button
+          onClick={() => setActiveTab('vehicles')}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'vehicles'
+              ? 'text-blue-400 border-blue-400'
+              : 'text-gray-400 border-transparent hover:text-white'
+          }`}
+        >
+          <Car className="w-4 h-4 inline mr-2" />
+          My Vehicles
+        </button>
+        <button
           onClick={() => setActiveTab('favorites')}
           className={`px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'favorites'
@@ -502,10 +514,15 @@ export default function CarOwnerDashboard() {
               filteredShops.map((shop) => (
                 <Card key={shop.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader className="pb-3">
-                    <div className="aspect-video bg-gray-700 rounded-lg mb-3 overflow-hidden">
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                        <Car className="w-12 h-12 text-gray-400" />
-                      </div>
+                    <div className="w-full aspect-video bg-gray-700 rounded-lg mb-3 flex items-center justify-center overflow-hidden">
+                      <Image
+                        src="/images/car.png"
+                        alt="Car Wash"
+                        width={240}
+                        height={120}
+                        style={{ objectFit: 'contain' }}
+                        className="max-h-full max-w-full"
+                      />
                     </div>
                     <div className="flex items-start justify-between">
                       <div>
@@ -661,6 +678,22 @@ export default function CarOwnerDashboard() {
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Vehicles Tab */}
+      {activeTab === 'vehicles' && (
+        <div className="text-center py-12">
+          <Car className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-white mb-2">Manage Your Vehicles</h3>
+          <p className="text-gray-400 mb-6">Add, edit, or remove vehicles from your account</p>
+          <Button 
+            onClick={() => window.location.href = '/dashboard/car-owner/vehicles'}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Manage Vehicles
+          </Button>
         </div>
       )}
 

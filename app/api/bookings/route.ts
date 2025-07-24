@@ -169,15 +169,16 @@ export async function POST(request: NextRequest) {
     const {
       shopId,
       serviceId,
+      vehicleId,
       date,
       time,
       notes
     } = body
 
     // Validate required fields
-    if (!shopId || !serviceId || !date || !time) {
+    if (!shopId || !serviceId || !vehicleId || !date || !time) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: shopId, serviceId, date, time' },
+        { success: false, error: 'Missing required fields: shopId, serviceId, vehicleId, date, time' },
         { status: 400 }
       )
     }
@@ -232,21 +233,23 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Create a default vehicle for the car owner if none exists
-      let vehicle = await prisma.vehicle.findFirst({
-        where: { carOwnerId: carOwner.id }
+      // Verify vehicle exists and belongs to car owner
+      const vehicle = await prisma.vehicle.findUnique({
+        where: { id: vehicleId }
       })
 
       if (!vehicle) {
-        vehicle = await prisma.vehicle.create({
-          data: {
-            carOwnerId: carOwner.id,
-            make: 'Default',
-            model: 'Vehicle',
-            year: new Date().getFullYear(),
-            vehicleType: 'car'
-          }
-        })
+        return NextResponse.json(
+          { success: false, error: 'Vehicle not found' },
+          { status: 404 }
+        )
+      }
+
+      if (vehicle.carOwnerId !== carOwner.id) {
+        return NextResponse.json(
+          { success: false, error: 'Vehicle does not belong to this user' },
+          { status: 403 }
+        )
       }
 
       // Create the booking

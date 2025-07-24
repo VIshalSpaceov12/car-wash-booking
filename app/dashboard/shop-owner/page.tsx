@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
@@ -27,6 +27,7 @@ import {
   Phone
 } from 'lucide-react'
 import Image from 'next/image'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export default function ShopOwnerDashboard() {
   const { data: session } = useSession()
@@ -53,6 +54,28 @@ export default function ShopOwnerDashboard() {
     duration: '30',
     category: 'Basic'
   })
+
+  // Booking details modal state
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false)
+
+  // Extract unique customers from bookings
+  const uniqueCustomers = useMemo(() => {
+    const seen = new Set()
+    const customers = []
+    for (const booking of bookings) {
+      if (booking.customerId && !seen.has(booking.customerId)) {
+        seen.add(booking.customerId)
+        customers.push({
+          id: booking.customerId,
+          name: booking.customerName,
+          email: booking.customerEmail,
+          phone: booking.customerPhone
+        })
+      }
+    }
+    return customers
+  }, [bookings])
 
   // Fetch dashboard statistics
   useEffect(() => {
@@ -555,7 +578,15 @@ export default function ShopOwnerDashboard() {
                             {booking.status}
                           </div>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-gray-400 hover:text-white">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-gray-400 hover:text-white"
+                          onClick={() => {
+                            setSelectedBooking(booking)
+                            setIsBookingDialogOpen(true)
+                          }}
+                        >
                           <Eye className="w-4 h-4" />
                         </Button>
                       </div>
@@ -794,14 +825,38 @@ export default function ShopOwnerDashboard() {
 
       {/* Customers Tab */}
       {activeTab === 'customers' && (
-        <div className="text-center py-12">
-          <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-400 mb-2">Customer Management</h3>
-          <p className="text-gray-500 mb-4">View and manage your customer database</p>
-          <Button className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700">
-            <Users className="w-4 h-4 mr-2" />
-            Coming Soon
-          </Button>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-white">Customer Management</h2>
+          </div>
+          {uniqueCustomers.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-400 mb-2">No customers yet</h3>
+              <p className="text-gray-500 mb-4">Customers who book your services will appear here.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
+                <thead>
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Phone</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uniqueCustomers.map((customer) => (
+                    <tr key={customer.id} className="border-b border-gray-700 hover:bg-gray-700/30 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap text-white">{customer.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-300">{customer.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-300">{customer.phone}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -995,6 +1050,77 @@ export default function ShopOwnerDashboard() {
           )}
         </div>
       )}
+
+      {/* Booking Details Dialog */}
+      <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Booking Details</DialogTitle>
+          </DialogHeader>
+          {selectedBooking && (
+            <div className="space-y-4">
+              <div>
+                <span className="font-semibold text-gray-300">Customer:</span>
+                <span className="ml-2 text-white">{selectedBooking.customerName}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-300">Service:</span>
+                <span className="ml-2 text-white">{selectedBooking.serviceName}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-300">Date:</span>
+                <span className="ml-2 text-white">{new Date(selectedBooking.scheduledAt).toLocaleDateString()}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-300">Time:</span>
+                <span className="ml-2 text-white">{new Date(selectedBooking.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-300">Amount:</span>
+                <span className="ml-2 text-green-400">₹{selectedBooking.totalAmount}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-300">Status:</span>
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                  selectedBooking.status === 'completed' 
+                    ? 'bg-green-500/20 text-green-400'
+                    : selectedBooking.status === 'confirmed'
+                    ? 'bg-blue-500/20 text-blue-400'
+                    : selectedBooking.status === 'pending'
+                    ? 'bg-yellow-500/20 text-yellow-400'
+                    : 'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {selectedBooking.status}
+                </span>
+              </div>
+              {selectedBooking.vehicle && (
+                <div className="border-t border-gray-700 pt-4 mt-4">
+                  <div className="font-semibold text-gray-300 mb-2">Vehicle Details</div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-gray-400">Make:</span>
+                      <span className="ml-2 text-white">{selectedBooking.vehicle.make}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Model:</span>
+                      <span className="ml-2 text-white">{selectedBooking.vehicle.model}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Year:</span>
+                      <span className="ml-2 text-white">{selectedBooking.vehicle.year}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Color:</span>
+                      <span className="ml-2 text-white">{selectedBooking.vehicle.color}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Add more details as needed */}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
