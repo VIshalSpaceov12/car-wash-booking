@@ -49,3 +49,15 @@ export function formatBookingDate(dateString: string) {
     day: 'numeric'
   })
 }
+
+// Convert IST time to UTC for database storage
+export function convertISTToUTC(date: string, time: string): Date {
+  // Create date string in IST timezone
+  const istDateTime = `${date}T${time}:00+05:30`
+  return new Date(istDateTime)
+}
+
+// Convert UTC time from database to IST for display
+export function convertUTCToIST(utcDateString: string): Date {
+  return new Date(utcDateString)
+}

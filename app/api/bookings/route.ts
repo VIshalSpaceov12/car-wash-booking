@@ -185,9 +185,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate date is not in the past
-    const bookingDateTime = new Date(`${date}T${time}`)
-    if (bookingDateTime < new Date()) {
+    // Convert IST time to UTC for proper storage
+    const bookingDateTime = new Date(`${date}T${time}:00+05:30`)
+    
+    // Validate date is not in the past (compare in IST)
+    const nowIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
+    const currentDateTimeIST = new Date(nowIST)
+    const requestedDateTimeIST = new Date(`${date}T${time}:00`)
+    
+    if (requestedDateTimeIST < currentDateTimeIST) {
       return NextResponse.json(
         { success: false, error: 'Cannot book for past dates' },
         { status: 400 }
