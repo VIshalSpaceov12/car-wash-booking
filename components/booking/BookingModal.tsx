@@ -67,14 +67,12 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(false)
   const [step, setStep] = useState<'select-service' | 'select-vehicle' | 'booking-details' | 'confirmation'>('select-service')
 
-  if (!shop) return null
-
   // Fetch vehicles when modal opens
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && shop) {
       fetchVehicles()
     }
-  }, [isOpen])
+  }, [isOpen, shop])
 
   const fetchVehicles = async () => {
     setIsLoadingVehicles(true)
@@ -97,6 +95,8 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
       setIsLoadingVehicles(false)
     }
   }
+
+  if (!shop) return null
 
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service)

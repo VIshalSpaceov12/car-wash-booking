@@ -6,8 +6,9 @@ import { prisma } from '@/lib/db'
 // GET /api/vehicles/[id] - Get specific vehicle
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -26,7 +27,7 @@ export async function GET(
     }
 
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         carOwner: {
           select: {
@@ -61,6 +62,7 @@ export async function GET(
         color: vehicle.color,
         plateNumber: vehicle.plateNumber,
         vehicleType: vehicle.vehicleType,
+        image: vehicle.image,
         createdAt: vehicle.createdAt.toISOString(),
         updatedAt: vehicle.updatedAt.toISOString()
       }
@@ -78,8 +80,9 @@ export async function GET(
 // PUT /api/vehicles/[id] - Update vehicle
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -98,7 +101,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { make, model, year, color, plateNumber, vehicleType } = body
+    const { make, model, year, color, plateNumber, vehicleType, image } = body
 
     // Validate required fields
     if (!make || !model || !year || !vehicleType) {
@@ -119,7 +122,7 @@ export async function PUT(
 
     // Check if vehicle exists and belongs to user
     const existingVehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         carOwner: {
           select: {
@@ -157,16 +160,28 @@ export async function PUT(
       }
     }
 
+    // Log the incoming data for debugging
+    console.log('Updating vehicle with data:', {
+      make: make?.trim(),
+      model: model?.trim(), 
+      year: parseInt(year),
+      color: color?.trim() || null,
+      plateNumber: plateNumber?.trim().toUpperCase() || null,
+      vehicleType,
+      imageLength: image ? image.length : 0
+    })
+
     // Update vehicle
     const updatedVehicle = await prisma.vehicle.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         make: make.trim(),
         model: model.trim(),
         year: parseInt(year),
         color: color?.trim() || null,
         plateNumber: plateNumber?.trim().toUpperCase() || null,
-        vehicleType: vehicleType
+        vehicleType: vehicleType,
+        image: image || null
       }
     })
 
@@ -180,6 +195,7 @@ export async function PUT(
         color: updatedVehicle.color,
         plateNumber: updatedVehicle.plateNumber,
         vehicleType: updatedVehicle.vehicleType,
+        image: updatedVehicle.image,
         createdAt: updatedVehicle.createdAt.toISOString(),
         updatedAt: updatedVehicle.updatedAt.toISOString()
       },
@@ -188,8 +204,15 @@ export async function PUT(
 
   } catch (error) {
     console.error('Error updating vehicle:', error)
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        code: (error as any).code,
+        meta: (error as any).meta
+      })
+    }
     return NextResponse.json(
-      { success: false, error: 'Failed to update vehicle' },
+      { success: false, error: 'Failed to update vehicle: ' + (error instanceof Error ? error.message : 'Unknown error') },
       { status: 500 }
     )
   }
@@ -198,8 +221,9 @@ export async function PUT(
 // DELETE /api/vehicles/[id] - Delete vehicle
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -219,7 +243,7 @@ export async function DELETE(
 
     // Check if vehicle exists and belongs to user
     const vehicle = await prisma.vehicle.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         carOwner: {
           select: {
@@ -272,7 +296,7 @@ export async function DELETE(
 
     // Delete vehicle
     await prisma.vehicle.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     return NextResponse.json({

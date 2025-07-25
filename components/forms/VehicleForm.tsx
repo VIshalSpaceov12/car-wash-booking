@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import ImageUpload from '@/components/ui/ImageUpload'
 import { Car, X } from 'lucide-react'
 
 interface Vehicle {
@@ -13,6 +14,7 @@ interface Vehicle {
   color?: string
   plateNumber?: string
   vehicleType: string
+  image?: string
 }
 
 interface VehicleFormProps {
@@ -38,7 +40,8 @@ export default function VehicleForm({
     year: vehicle?.year || new Date().getFullYear(),
     color: vehicle?.color || '',
     plateNumber: vehicle?.plateNumber || '',
-    vehicleType: vehicle?.vehicleType || 'car'
+    vehicleType: vehicle?.vehicleType || 'car',
+    image: vehicle?.image || ''
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -244,6 +247,18 @@ export default function VehicleForm({
                 />
                 {errors.plateNumber && <p className="text-red-400 text-xs">{errors.plateNumber}</p>}
               </div>
+            </div>
+
+            {/* Vehicle Image */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-300">Vehicle Image</label>
+              <ImageUpload
+                value={formData.image}
+                onChange={(url) => setFormData(prev => ({ ...prev, image: url }))}
+                onRemove={() => setFormData(prev => ({ ...prev, image: '' }))}
+                placeholder="Upload vehicle image"
+                disabled={isLoading}
+              />
             </div>
 
             {/* Actions */}

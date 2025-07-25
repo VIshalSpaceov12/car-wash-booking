@@ -76,7 +76,7 @@ export default function ProfilePage() {
         if (session?.user.role === 'CAR_OWNER') {
           setCarOwnerProfile(data.profile)
           setFormData({
-            name: data.profile.userName || session.user.name || '',
+            name: data.profile.userName || session?.user?.name || '',
             phone: data.profile.userPhone || '',
             address: data.profile.address || '',
             city: data.profile.city || '',
@@ -86,7 +86,7 @@ export default function ProfilePage() {
         } else {
           setShopOwnerProfile(data.profile)
           setFormData({
-            name: data.profile.userName || session.user.name || '',
+            name: data.profile.userName || session?.user?.name || '',
             businessName: data.profile.businessName || '',
             description: data.profile.description || '',
             address: data.profile.address || '',
@@ -100,7 +100,7 @@ export default function ProfilePage() {
         // If profile doesn't exist, initialize with session data
         if (session?.user.role === 'CAR_OWNER') {
           setFormData({
-            name: session.user.name || '',
+            name: session?.user?.name || '',
             phone: '',
             address: '',
             city: '',
@@ -109,7 +109,7 @@ export default function ProfilePage() {
           })
         } else {
           setFormData({
-            name: session.user.name || '',
+            name: session?.user?.name || '',
             businessName: '',
             description: '',
             address: '',
@@ -125,7 +125,7 @@ export default function ProfilePage() {
       // Initialize with session data if API fails
       if (session?.user.role === 'CAR_OWNER') {
         setFormData({
-          name: session.user.name || '',
+          name: session?.user?.name || '',
           phone: '',
           address: '',
           city: '',
@@ -134,7 +134,7 @@ export default function ProfilePage() {
         })
       } else {
         setFormData({
-          name: session.user.name || '',
+          name: session?.user?.name || '',
           businessName: '',
           description: '',
           address: '',
@@ -185,7 +185,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Failed to update profile: ' + error.message)
+      alert('Failed to update profile: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
       setSaving(false)
     }

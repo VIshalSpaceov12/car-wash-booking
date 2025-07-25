@@ -6,11 +6,12 @@ import { prisma } from '@/lib/db'
 // GET /api/services/[id] - Get a specific service
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const service = await prisma.service.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         shopOwner: {
           select: {
@@ -46,6 +47,7 @@ export async function GET(
         price: service.price,
         duration: service.duration,
         category: service.category,
+        image: service.image,
         isActive: service.isActive,
         shopName: service.shopOwner.businessName,
         ownerName: service.shopOwner.user.name,
@@ -67,8 +69,9 @@ export async function GET(
 // PUT /api/services/[id] - Update a service
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -87,7 +90,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, description, price, duration, category, isActive } = body
+    const { name, description, price, duration, category, image, isActive } = body
 
     // Validate required fields
     if (!name || !price || !duration || !category) {
@@ -111,7 +114,7 @@ export async function PUT(
 
     // Verify service belongs to the shop owner
     const existingService = await prisma.service.findUnique({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     if (!existingService) {
@@ -130,13 +133,14 @@ export async function PUT(
 
     // Update the service
     const updatedService = await prisma.service.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: {
         name: name.trim(),
         description: description?.trim() || null,
         price: parseFloat(price),
         duration: parseInt(duration),
         category: category.trim(),
+        image: image || null,
         isActive: isActive !== undefined ? isActive : true
       }
     })
@@ -150,6 +154,7 @@ export async function PUT(
         price: updatedService.price,
         duration: updatedService.duration,
         category: updatedService.category,
+        image: updatedService.image,
         isActive: updatedService.isActive,
         updatedAt: updatedService.updatedAt.toISOString()
       },
@@ -168,8 +173,9 @@ export async function PUT(
 // DELETE /api/services/[id] - Delete a service
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -201,7 +207,7 @@ export async function DELETE(
 
     // Verify service belongs to the shop owner
     const existingService = await prisma.service.findUnique({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       include: {
         _count: {
           select: {
@@ -235,7 +241,7 @@ export async function DELETE(
 
     // Delete the service
     await prisma.service.delete({
-      where: { id: params.id }
+      where: { id: resolvedParams.id }
     })
 
     return NextResponse.json({

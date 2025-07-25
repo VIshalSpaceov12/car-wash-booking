@@ -56,6 +56,7 @@ export async function GET(request: NextRequest) {
       price: service.price,
       duration: service.duration,
       category: service.category,
+      image: service.image,
       isActive: service.isActive,
       bookingCount: service._count.bookings,
       createdAt: service.createdAt.toISOString(),
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description, price, duration, category } = body
+    const { name, description, price, duration, category, image } = body
 
     // Validate required fields
     if (!name || !price || !duration || !category) {
@@ -127,6 +128,7 @@ export async function POST(request: NextRequest) {
         price: parseFloat(price),
         duration: parseInt(duration),
         category: category.trim(),
+        image: image || null,
         isActive: true
       }
     })
@@ -140,6 +142,7 @@ export async function POST(request: NextRequest) {
         price: newService.price,
         duration: newService.duration,
         category: newService.category,
+        image: newService.image,
         isActive: newService.isActive,
         createdAt: newService.createdAt.toISOString()
       },

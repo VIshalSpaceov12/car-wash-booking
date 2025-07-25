@@ -5,8 +5,9 @@ import { authOptions } from '@/lib/auth'
 // GET /api/bookings/[id] - Get specific booking details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -17,7 +18,7 @@ export async function GET(
       )
     }
 
-    const bookingId = params.id
+    const bookingId = resolvedParams.id
 
     // Mock booking data - in real app, fetch from database
     const mockBooking = {
@@ -69,8 +70,9 @@ export async function GET(
 // PATCH /api/bookings/[id] - Update booking
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -81,7 +83,7 @@ export async function PATCH(
       )
     }
 
-    const bookingId = params.id
+    const bookingId = resolvedParams.id
     const body = await request.json()
     
     const allowedFields = ['date', 'time', 'notes', 'status']
@@ -156,8 +158,9 @@ export async function PATCH(
 // DELETE /api/bookings/[id] - Cancel booking
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolvedParams = await params
   try {
     const session = await getServerSession(authOptions)
     
@@ -168,7 +171,7 @@ export async function DELETE(
       )
     }
 
-    const bookingId = params.id
+    const bookingId = resolvedParams.id
 
     // Check if booking exists and user has permission (mock check)
     // In real app, fetch booking from database and verify ownership

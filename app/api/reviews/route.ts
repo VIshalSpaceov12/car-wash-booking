@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const shopId = searchParams.get('shopId')
     const serviceId = searchParams.get('serviceId')
+    const rating = searchParams.get('rating')
     const limit = parseInt(searchParams.get('limit') || '10')
     const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
       whereClause.booking = {
         serviceId: serviceId
       }
+    }
+
+    if (rating) {
+      whereClause.rating = parseInt(rating)
     }
 
     const reviews = await prisma.review.findMany({

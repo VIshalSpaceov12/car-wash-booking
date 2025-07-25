@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import VehicleForm from '@/components/forms/VehicleForm'
+import Image from 'next/image'
 import { 
   Car, 
   Plus, 
@@ -22,6 +23,7 @@ interface Vehicle {
   color?: string
   plateNumber?: string
   vehicleType: string
+  image?: string
   createdAt: string
   updatedAt: string
 }
@@ -92,6 +94,14 @@ export default function VehiclesPage() {
 
     setIsSubmitting(true)
     try {
+      // Debug logging
+      console.log('🚗 Updating vehicle:', {
+        vehicleId: editingVehicle.id,
+        hasImage: !!vehicleData.image,
+        imageLength: vehicleData.image?.length || 0,
+        payloadSize: JSON.stringify(vehicleData).length
+      })
+
       const response = await fetch(`/api/vehicles/${editingVehicle.id}`, {
         method: 'PUT',
         headers: {
@@ -109,10 +119,11 @@ export default function VehiclesPage() {
         setEditingVehicle(null)
         alert('Vehicle updated successfully!')
       } else {
+        console.error('❌ API Error:', data.error)
         alert(data.error || 'Failed to update vehicle')
       }
     } catch (error) {
-      console.error('Error updating vehicle:', error)
+      console.error('❌ Network Error updating vehicle:', error)
       alert('Failed to update vehicle. Please try again.')
     } finally {
       setIsSubmitting(false)
@@ -202,6 +213,25 @@ export default function VehiclesPage() {
           vehicles.map((vehicle) => (
             <Card key={vehicle.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300">
               <CardHeader className="pb-3">
+                {/* Vehicle Image */}
+                {vehicle.image ? (
+                  <div className="w-full h-40 relative rounded-lg overflow-hidden mb-4">
+                    <Image
+                      src={vehicle.image}
+                      alt={`${vehicle.make} ${vehicle.model}`}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-40 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center mb-4">
+                    <div className="text-center">
+                      <Car className="w-12 h-12 text-gray-500 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500">No image</p>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center text-2xl">
                     {getVehicleTypeIcon(vehicle.vehicleType)}

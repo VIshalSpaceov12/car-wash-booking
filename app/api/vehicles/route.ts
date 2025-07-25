@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         color: vehicle.color,
         plateNumber: vehicle.plateNumber,
         vehicleType: vehicle.vehicleType,
+        image: vehicle.image,
         createdAt: vehicle.createdAt.toISOString(),
         updatedAt: vehicle.updatedAt.toISOString()
       }))
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { make, model, year, color, plateNumber, vehicleType } = body
+    const { make, model, year, color, plateNumber, vehicleType, image } = body
 
     // Validate required fields
     if (!make || !model || !year || !vehicleType) {
@@ -138,7 +139,8 @@ export async function POST(request: NextRequest) {
         year: parseInt(year),
         color: color?.trim() || null,
         plateNumber: plateNumber?.trim().toUpperCase() || null,
-        vehicleType: vehicleType
+        vehicleType: vehicleType,
+        image: image || null
       }
     })
 
@@ -152,6 +154,7 @@ export async function POST(request: NextRequest) {
         color: newVehicle.color,
         plateNumber: newVehicle.plateNumber,
         vehicleType: newVehicle.vehicleType,
+        image: newVehicle.image,
         createdAt: newVehicle.createdAt.toISOString(),
         updatedAt: newVehicle.updatedAt.toISOString()
       },

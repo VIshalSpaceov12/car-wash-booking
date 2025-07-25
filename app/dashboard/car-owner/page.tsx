@@ -1,7 +1,7 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import BookingModal from '@/components/booking/BookingModal'
@@ -17,21 +17,27 @@ import {
   Plus,
   History,
   Heart,
-  Zap
+  Zap,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import Image from 'next/image'
 
 export default function CarOwnerDashboard() {
   const { data: session } = useSession()
   const [activeTab, setActiveTab] = useState('book')
-  const [shops, setShops] = useState([])
-  const [filteredShops, setFilteredShops] = useState([])
-  const [bookings, setBookings] = useState([])
+  const [shops, setShops] = useState<any[]>([])
+  const [filteredShops, setFilteredShops] = useState<any[]>([])
+  const [bookings, setBookings] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedShop, setSelectedShop] = useState(null)
+  const [selectedShop, setSelectedShop] = useState<any>(null)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
-  const [selectedBookingForReview, setSelectedBookingForReview] = useState(null)
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState<any>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+
+  // Expand/collapse state for booking sections
+  const [isUpcomingExpanded, setIsUpcomingExpanded] = useState(true)
+  const [isPastExpanded, setIsPastExpanded] = useState(false)
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('')
@@ -82,6 +88,30 @@ export default function CarOwnerDashboard() {
     }
   }, [session])
 
+  // Organize bookings by past and upcoming, sorted by date
+  const organizedBookings = useMemo(() => {
+    const now = new Date()
+    const upcoming: any[] = []
+    const past: any[] = []
+
+    bookings.forEach(booking => {
+      const bookingDate = new Date(booking.scheduledAt)
+      if (bookingDate >= now) {
+        upcoming.push(booking)
+      } else {
+        past.push(booking)
+      }
+    })
+
+    // Sort upcoming by nearest date first (ascending)
+    upcoming.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    
+    // Sort past by most recent first (descending)
+    past.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+
+    return { upcoming, past }
+  }, [bookings])
+
   // Search and filter logic
   useEffect(() => {
     let filtered = [...shops]
@@ -92,7 +122,7 @@ export default function CarOwnerDashboard() {
       filtered = filtered.filter(shop => 
         shop.name.toLowerCase().includes(query) ||
         shop.address.toLowerCase().includes(query) ||
-        shop.services.some(service => 
+        shop.services.some((service: any) => 
           service.name.toLowerCase().includes(query)
         )
       )
@@ -101,7 +131,7 @@ export default function CarOwnerDashboard() {
     // Apply price range filter
     if (filters.priceRange !== 'all') {
       filtered = filtered.filter(shop => {
-        const minPrice = Math.min(...shop.services.map(s => s.price))
+        const minPrice = Math.min(...shop.services.map((s: any) => s.price))
         switch (filters.priceRange) {
           case 'low': return minPrice < 300
           case 'medium': return minPrice >= 300 && minPrice < 500
@@ -126,7 +156,7 @@ export default function CarOwnerDashboard() {
     // Apply services filter
     if (filters.services !== 'all') {
       filtered = filtered.filter(shop => 
-        shop.services.some(service => 
+        shop.services.some((service: any) => 
           service.category.toLowerCase() === filters.services.toLowerCase()
         )
       )
@@ -137,8 +167,8 @@ export default function CarOwnerDashboard() {
 
   // Close filter dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (isFilterOpen && !event.target.closest('.filter-dropdown')) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isFilterOpen && event.target && !(event.target as Element).closest('.filter-dropdown')) {
         setIsFilterOpen(false)
       }
     }
@@ -147,11 +177,11 @@ export default function CarOwnerDashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isFilterOpen])
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
   }
 
-  const handleFilterChange = (filterType, value) => {
+  const handleFilterChange = (filterType: string, value: any) => {
     setFilters(prev => ({
       ...prev,
       [filterType]: value
@@ -169,7 +199,7 @@ export default function CarOwnerDashboard() {
     setIsFilterOpen(false)
   }
 
-  const handleBookNow = (shop) => {
+  const handleBookNow = (shop: any) => {
     setSelectedShop(shop)
     setIsBookingModalOpen(true)
   }
@@ -194,7 +224,7 @@ export default function CarOwnerDashboard() {
     }
   }
 
-  const handleRateService = (booking) => {
+  const handleRateService = (booking: any) => {
     setSelectedBookingForReview(booking)
     setIsReviewModalOpen(true)
   }
@@ -549,7 +579,7 @@ export default function CarOwnerDashboard() {
                       <div>
                         <div className="text-sm text-gray-400 mb-1">Services:</div>
                         <div className="flex flex-wrap gap-1">
-                          {shop.services.slice(0, 3).map((service) => (
+                          {shop.services.slice(0, 3).map((service: any) => (
                             <span
                               key={service.id}
                               className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-full"
@@ -604,65 +634,157 @@ export default function CarOwnerDashboard() {
       {/* My Bookings Tab */}
       {activeTab === 'bookings' && (
         <div className="space-y-6">
-          <div className="grid gap-4">
-            {bookings.map((booking) => (
-              <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
-                        <Car className="w-6 h-6 text-blue-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">{booking.shopName}</h3>
-                        <p className="text-sm text-gray-400 mb-1">{booking.serviceName}</p>
-                        <div className="flex items-center gap-4 text-sm text-gray-400">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            {new Date(booking.scheduledAt).toLocaleDateString()}
+          {/* Upcoming Bookings */}
+          {organizedBookings.upcoming.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setIsUpcomingExpanded(!isUpcomingExpanded)}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2 hover:text-blue-400 transition-colors">
+                  <Calendar className="w-5 h-5 text-blue-400" />
+                  Upcoming Bookings ({organizedBookings.upcoming.length})
+                  {isUpcomingExpanded ? (
+                    <ChevronUp className="w-4 h-4 ml-auto text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 ml-auto text-gray-400" />
+                  )}
+                </h3>
+              </button>
+              {isUpcomingExpanded && (
+                <div className="grid gap-4">
+                {organizedBookings.upcoming.map((booking) => (
+                  <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center">
+                            <Car className="w-6 h-6 text-blue-400" />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                              hour: 'numeric', 
-                              minute: '2-digit', 
-                              hour12: true 
-                            })}
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{booking.shopName}</h3>
+                            <p className="text-sm text-gray-400 mb-1">{booking.serviceName}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              booking.status === 'completed' 
+                                ? 'bg-green-500/20 text-green-400'
+                                : booking.status === 'confirmed'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : booking.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {booking.status}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          booking.status === 'completed' 
-                            ? 'bg-green-500/20 text-green-400'
-                            : booking.status === 'confirmed'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : booking.status === 'pending'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {booking.status}
+                    </CardContent>
+                  </Card>
+                ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Past Bookings */}
+          {organizedBookings.past.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setIsPastExpanded(!isPastExpanded)}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2 hover:text-gray-300 transition-colors">
+                  <History className="w-5 h-5 text-gray-400" />
+                  Past Bookings ({organizedBookings.past.length})
+                  {isPastExpanded ? (
+                    <ChevronUp className="w-4 h-4 ml-auto text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 ml-auto text-gray-400" />
+                  )}
+                </h3>
+              </button>
+              {isPastExpanded && (
+                <div className="grid gap-4">
+                {organizedBookings.past.map((booking) => (
+                  <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-gray-500 transition-all duration-300 opacity-80">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-500/20 to-gray-600/20 rounded-lg flex items-center justify-center">
+                            <Car className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{booking.shopName}</h3>
+                            <p className="text-sm text-gray-400 mb-1">{booking.serviceName}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-400">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        {booking.status === 'completed' && (
-                          <Button
-                            onClick={() => handleRateService(booking)}
-                            size="sm"
-                            className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-xs"
-                          >
-                            <Star className="w-3 h-3 mr-1" />
-                            Rate
-                          </Button>
-                        )}
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              booking.status === 'completed' 
+                                ? 'bg-green-500/20 text-green-400'
+                                : booking.status === 'confirmed'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : booking.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {booking.status}
+                            </div>
+                            {booking.status === 'completed' && (
+                              <Button
+                                onClick={() => handleRateService(booking)}
+                                size="sm"
+                                className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-xs"
+                              >
+                                <Star className="w-3 h-3 mr-1" />
+                                Rate
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {bookings.length === 0 && (
             <div className="text-center py-12">

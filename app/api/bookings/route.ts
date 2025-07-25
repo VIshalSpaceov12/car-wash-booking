@@ -130,6 +130,8 @@ export async function GET(request: NextRequest) {
       status: booking.status.toLowerCase(),
       totalAmount: booking.totalAmount,
       notes: booking.notes,
+      beforeImages: booking.beforeImages || [],
+      afterImages: booking.afterImages || [],
       createdAt: booking.createdAt.toISOString(),
       updatedAt: booking.updatedAt.toISOString()
     }))

@@ -24,9 +24,20 @@ import {
   Trash2,
   Settings,
   Building,
-  Phone
+  Phone,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
+  Camera,
+  Images,
+  Upload,
+  X,
+  CheckCircle
 } from 'lucide-react'
 import Image from 'next/image'
+import ImageUpload from '@/components/ui/ImageUpload'
+import ReviewManagement from '@/components/review/ReviewManagement'
+import BookingGallery from '@/components/gallery/BookingGallery'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export default function ShopOwnerDashboard() {
@@ -38,26 +49,37 @@ export default function ShopOwnerDashboard() {
     avgRating: 0,
     activeServices: 0
   })
-  const [bookings, setBookings] = useState([])
-  const [services, setServices] = useState([])
+  const [bookings, setBookings] = useState<any[]>([])
+  const [services, setServices] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   
   // Profile management state
-  const [businessProfile, setBusinessProfile] = useState(null)
+  const [businessProfile, setBusinessProfile] = useState<any>(null)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
   const [isEditingService, setIsEditingService] = useState(false)
-  const [editingServiceId, setEditingServiceId] = useState(null)
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null)
   const [newServiceData, setNewServiceData] = useState({
     name: '',
     description: '',
     price: '',
     duration: '30',
-    category: 'Basic'
+    category: 'Basic',
+    image: ''
   })
 
   // Booking details modal state
-  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [selectedBooking, setSelectedBooking] = useState<any>(null)
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false)
+  
+  // Add images modal state
+  const [selectedBookingForImages, setSelectedBookingForImages] = useState<any>(null)
+  const [isAddImagesModalOpen, setIsAddImagesModalOpen] = useState(false)
+  const [imageType, setImageType] = useState('before')
+  const [newImages, setNewImages] = useState<string[]>([])
+
+  // Expand/collapse state for booking sections
+  const [isUpcomingExpanded, setIsUpcomingExpanded] = useState(true)
+  const [isPastExpanded, setIsPastExpanded] = useState(false)
 
   // Extract unique customers from bookings
   const uniqueCustomers = useMemo(() => {
@@ -76,6 +98,98 @@ export default function ShopOwnerDashboard() {
     }
     return customers
   }, [bookings])
+
+  // Add images functions
+  const openAddImagesModal = (booking: any) => {
+    setSelectedBookingForImages(booking)
+    setNewImages([])
+    setImageType('before')
+    setIsAddImagesModalOpen(true)
+  }
+
+  const handleAddImage = (imageUrl: string) => {
+    setNewImages(prev => [...prev, imageUrl])
+  }
+
+  const handleRemoveImage = (index: number) => {
+    setNewImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleSaveImages = async () => {
+    if (!selectedBookingForImages || newImages.length === 0) return
+
+    try {
+      const response = await fetch(`/api/bookings/${selectedBookingForImages.id}/images`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: imageType,
+          images: newImages
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Update the booking in our state
+        setBookings(prev => prev.map(booking => 
+          booking.id === selectedBookingForImages.id 
+            ? { 
+                ...booking, 
+                [imageType === 'before' ? 'beforeImages' : 'afterImages']: [
+                  ...booking[imageType === 'before' ? 'beforeImages' : 'afterImages'], 
+                  ...newImages
+                ]
+              }
+            : booking
+        ))
+        setIsAddImagesModalOpen(false)
+        setNewImages([])
+        alert('Images added successfully!')
+      } else {
+        alert('Failed to add images: ' + data.error)
+      }
+    } catch (error) {
+      console.error('Error saving images:', error)
+      alert('Failed to add images. Please try again.')
+    }
+  }
+
+  // Handle marking booking as complete
+  const handleMarkAsComplete = async (bookingId: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'completed'
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Update the booking in local state
+        setBookings(prevBookings =>
+          prevBookings.map(booking =>
+            booking.id === bookingId
+              ? { ...booking, status: 'completed' }
+              : booking
+          )
+        )
+        alert('Booking marked as complete!')
+      } else {
+        alert('Failed to update booking: ' + data.error)
+      }
+    } catch (error) {
+      console.error('Error updating booking status:', error)
+      alert('Failed to update booking status. Please try again.')
+    }
+  }
 
   // Fetch dashboard statistics
   useEffect(() => {
@@ -114,6 +228,30 @@ export default function ShopOwnerDashboard() {
       fetchBookings()
     }
   }, [session])
+
+  // Organize bookings by past and upcoming, sorted by date
+  const organizedBookings = useMemo(() => {
+    const now = new Date()
+    const upcoming: any[] = []
+    const past: any[] = []
+
+    bookings.forEach(booking => {
+      const bookingDate = new Date(booking.scheduledAt)
+      if (bookingDate >= now) {
+        upcoming.push(booking)
+      } else {
+        past.push(booking)
+      }
+    })
+
+    // Sort upcoming by nearest date first (ascending)
+    upcoming.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    
+    // Sort past by most recent first (descending)
+    past.sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+
+    return { upcoming, past }
+  }, [bookings])
 
   // Fetch services data
   useEffect(() => {
@@ -156,7 +294,7 @@ export default function ShopOwnerDashboard() {
   }, [session])
 
   // Handle service creation/editing
-  const handleServiceSubmit = async (e) => {
+  const handleServiceSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     try {
@@ -187,7 +325,8 @@ export default function ShopOwnerDashboard() {
           description: '',
           price: '',
           duration: '30',
-          category: 'Basic'
+          category: 'Basic',
+          image: ''
         })
         setIsEditingService(false)
         setEditingServiceId(null)
@@ -200,19 +339,20 @@ export default function ShopOwnerDashboard() {
     }
   }
 
-  const handleEditService = (service) => {
+  const handleEditService = (service: any) => {
     setNewServiceData({
       name: service.name,
       description: service.description || '',
       price: service.price.toString(),
       duration: service.duration.toString(),
-      category: service.category
+      category: service.category,
+      image: service.image || ''
     })
     setEditingServiceId(service.id)
     setIsEditingService(true)
   }
 
-  const handleDeleteService = async (serviceId) => {
+  const handleDeleteService = async (serviceId: string) => {
     if (!confirm('Are you sure you want to delete this service?')) return
 
     try {
@@ -386,6 +526,28 @@ export default function ShopOwnerDashboard() {
           Customers
         </button>
         <button
+          onClick={() => setActiveTab('reviews')}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'reviews'
+              ? 'text-purple-400 border-purple-400'
+              : 'text-gray-400 border-transparent hover:text-white'
+          }`}
+        >
+          <MessageSquare className="w-4 h-4 inline mr-2" />
+          Reviews
+        </button>
+        <button
+          onClick={() => setActiveTab('gallery')}
+          className={`px-6 py-3 font-medium transition-colors border-b-2 ${
+            activeTab === 'gallery'
+              ? 'text-purple-400 border-purple-400'
+              : 'text-gray-400 border-transparent hover:text-white'
+          }`}
+        >
+          <Images className="w-4 h-4 inline mr-2" />
+          Gallery
+        </button>
+        <button
           onClick={() => setActiveTab('profile')}
           className={`px-6 py-3 font-medium transition-colors border-b-2 ${
             activeTab === 'profile'
@@ -424,8 +586,8 @@ export default function ShopOwnerDashboard() {
                     </div>
                   </div>
                 ))
-              ) : bookings.length > 0 ? (
-                bookings.slice(0, 3).map((booking) => (
+              ) : organizedBookings.upcoming.length > 0 ? (
+                organizedBookings.upcoming.slice(0, 3).map((booking) => (
                   <div key={booking.id} className="flex items-center justify-between p-3 bg-gray-700/50 rounded-lg">
                     <div>
                       <p className="font-medium text-white">{booking.customerName}</p>
@@ -512,96 +674,201 @@ export default function ShopOwnerDashboard() {
             </Button>
           </div>
 
-          <div className="grid gap-4">
-            {isLoading ? (
-              // Loading skeleton
-              [...Array(3)].map((_, index) => (
-                <Card key={index} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
-                  <CardContent className="p-6 animate-pulse">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-600 rounded-lg"></div>
-                        <div className="space-y-2">
-                          <div className="h-5 bg-gray-600 rounded w-32"></div>
-                          <div className="h-4 bg-gray-600 rounded w-24"></div>
-                          <div className="h-3 bg-gray-600 rounded w-40"></div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-5 bg-gray-600 rounded w-16"></div>
-                        <div className="h-6 bg-gray-600 rounded w-20"></div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : bookings.length > 0 ? (
-              bookings.map((booking) => (
-                <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
-                          <Users className="w-6 h-6 text-purple-400" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{booking.customerName}</h3>
-                          <p className="text-gray-400">{booking.serviceName}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
-                              {new Date(booking.scheduledAt).toLocaleDateString()}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4" />
-                              {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                                hour: 'numeric', 
-                                minute: '2-digit', 
-                                hour12: true 
-                              })}
+          {/* Upcoming Bookings */}
+          {organizedBookings.upcoming.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setIsUpcomingExpanded(!isUpcomingExpanded)}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2 hover:text-purple-400 transition-colors">
+                  <Calendar className="w-5 h-5 text-purple-400" />
+                  Upcoming Bookings ({organizedBookings.upcoming.length})
+                  {isUpcomingExpanded ? (
+                    <ChevronUp className="w-4 h-4 ml-auto text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 ml-auto text-gray-400" />
+                  )}
+                </h3>
+              </button>
+              {isUpcomingExpanded && (
+                <div className="grid gap-4">
+                {organizedBookings.upcoming.map((booking) => (
+                  <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-purple-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
+                            <Users className="w-6 h-6 text-purple-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{booking.customerName}</h3>
+                            <p className="text-gray-400">{booking.serviceName}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
                             </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              booking.status === 'completed' 
+                                ? 'bg-green-500/20 text-green-400'
+                                : booking.status === 'confirmed'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : booking.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {booking.status}
+                            </div>
+                          </div>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-gray-400 hover:text-white"
+                            onClick={() => {
+                              setSelectedBooking(booking)
+                              setIsBookingDialogOpen(true)
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
-                          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            booking.status === 'completed' 
-                              ? 'bg-green-500/20 text-green-400'
-                              : booking.status === 'confirmed'
-                              ? 'bg-blue-500/20 text-blue-400'
-                              : booking.status === 'pending'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : 'bg-gray-500/20 text-gray-400'
-                          }`}>
-                            {booking.status}
+                    </CardContent>
+                  </Card>
+                ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Past Bookings */}
+          {organizedBookings.past.length > 0 && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setIsPastExpanded(!isPastExpanded)}
+                className="w-full text-left"
+              >
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2 hover:text-gray-300 transition-colors">
+                  <Clock className="w-5 h-5 text-gray-400" />
+                  Past Bookings ({organizedBookings.past.length})
+                  {isPastExpanded ? (
+                    <ChevronUp className="w-4 h-4 ml-auto text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4 ml-auto text-gray-400" />
+                  )}
+                </h3>
+              </button>
+              {isPastExpanded && (
+                <div className="grid gap-4">
+                {organizedBookings.past.map((booking) => (
+                  <Card key={booking.id} className="bg-gray-800 border-gray-700 hover:border-gray-500 transition-all duration-300 opacity-80">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-gray-500/20 to-gray-600/20 rounded-lg flex items-center justify-center">
+                            <Users className="w-6 h-6 text-gray-400" />
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-semibold text-white">{booking.customerName}</h3>
+                            <p className="text-gray-400">{booking.serviceName}</p>
+                            <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
+                                  hour: 'numeric', 
+                                  minute: '2-digit', 
+                                  hour12: true 
+                                })}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-gray-400 hover:text-white"
-                          onClick={() => {
-                            setSelectedBooking(booking)
-                            setIsBookingDialogOpen(true)
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-lg font-semibold text-green-400">₹{booking.totalAmount}</div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                              booking.status === 'completed' 
+                                ? 'bg-green-500/20 text-green-400'
+                                : booking.status === 'confirmed'
+                                ? 'bg-blue-500/20 text-blue-400'
+                                : booking.status === 'pending'
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              {booking.status}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {booking.status === 'confirmed' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-green-400 hover:text-green-300"
+                                onClick={() => handleMarkAsComplete(booking.id)}
+                                title="Mark as complete"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                              </Button>
+                            )}
+                            {booking.status === 'completed' && (
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-400 hover:text-blue-300"
+                                onClick={() => openAddImagesModal(booking)}
+                                title="Add before/after photos"
+                              >
+                                <Camera className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-gray-400 hover:text-white"
+                              onClick={() => {
+                                setSelectedBooking(booking)
+                                setIsBookingDialogOpen(true)
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-400 mb-2">No bookings yet</h3>
-                <p className="text-gray-500">Your bookings will appear here once customers start booking your services.</p>
-              </div>
-            )}
-          </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {bookings.length === 0 && (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-400 mb-2">No bookings yet</h3>
+              <p className="text-gray-500">Your bookings will appear here once customers start booking your services.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -694,6 +961,18 @@ export default function ShopOwnerDashboard() {
                     </div>
                   </div>
 
+                  {/* Service Image */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-300">Service Image</label>
+                    <ImageUpload
+                      value={newServiceData.image}
+                      onChange={(url) => setNewServiceData({...newServiceData, image: url})}
+                      onRemove={() => setNewServiceData({...newServiceData, image: ''})}
+                      placeholder="Upload service image"
+                      disabled={false}
+                    />
+                  </div>
+
                   <div className="flex gap-3 pt-4">
                     <Button
                       type="button"
@@ -706,7 +985,8 @@ export default function ShopOwnerDashboard() {
                           description: '',
                           price: '',
                           duration: '30',
-                          category: 'Basic'
+                          category: 'Basic',
+                          image: ''
                         })
                       }}
                       className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
@@ -760,6 +1040,25 @@ export default function ShopOwnerDashboard() {
               services.map((service) => (
                 <Card key={service.id} className="bg-gray-800 border-gray-700 hover:border-blue-500 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-blue-500/20">
                   <CardHeader>
+                    {/* Service Image */}
+                    {service.image ? (
+                      <div className="w-full h-32 relative rounded-lg overflow-hidden mb-4">
+                        <Image
+                          src={service.image}
+                          alt={service.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-32 bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg flex items-center justify-center mb-4">
+                        <div className="text-center">
+                          <Package className="w-8 h-8 text-gray-500 mx-auto mb-1" />
+                          <p className="text-xs text-gray-500">No image</p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-white">{service.name}</CardTitle>
                       <div className="flex gap-2">
@@ -858,6 +1157,16 @@ export default function ShopOwnerDashboard() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Reviews Tab */}
+      {activeTab === 'reviews' && businessProfile && (
+        <ReviewManagement shopId={businessProfile.id} />
+      )}
+
+      {/* Gallery Tab */}
+      {activeTab === 'gallery' && businessProfile && (
+        <BookingGallery shopId={businessProfile.id} />
       )}
 
       {/* Profile Tab */}
@@ -1116,11 +1425,128 @@ export default function ShopOwnerDashboard() {
                   </div>
                 </div>
               )}
-              {/* Add more details as needed */}
+              {/* Action Buttons */}
+              <div className="flex gap-2 mt-6 pt-4 border-t border-gray-700">
+                {selectedBooking.status === 'confirmed' && (
+                  <Button 
+                    onClick={() => {
+                      handleMarkAsComplete(selectedBooking.id)
+                      setIsBookingDialogOpen(false)
+                    }}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Mark as Complete
+                  </Button>
+                )}
+                {selectedBooking.status === 'completed' && (
+                  <Button 
+                    onClick={() => {
+                      openAddImagesModal(selectedBooking)
+                      setIsBookingDialogOpen(false)
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Camera className="w-4 h-4 mr-2" />
+                    Add Photos
+                  </Button>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Images Modal */}
+      {isAddImagesModalOpen && selectedBookingForImages && (
+        <Dialog open={isAddImagesModalOpen} onOpenChange={setIsAddImagesModalOpen}>
+          <DialogContent className="max-w-2xl bg-gray-800 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                Add Images - {selectedBookingForImages.customerName}
+              </DialogTitle>
+              <DialogDescription className="text-gray-400">
+                Upload before and after photos of the car wash service
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Image Type Selection */}
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setImageType('before')}
+                  variant={imageType === 'before' ? 'default' : 'outline'}
+                  className={imageType === 'before' ? 'bg-blue-600' : 'border-gray-600 text-gray-300'}
+                >
+                  Before Photos
+                </Button>
+                <Button
+                  onClick={() => setImageType('after')}
+                  variant={imageType === 'after' ? 'default' : 'outline'}
+                  className={imageType === 'after' ? 'bg-blue-600' : 'border-gray-600 text-gray-300'}
+                >
+                  After Photos
+                </Button>
+              </div>
+
+              {/* Image Upload */}
+              <div className="space-y-4">
+                <ImageUpload
+                  value=""
+                  onChange={handleAddImage}
+                  onRemove={() => {}}
+                  placeholder={`Upload ${imageType} photos`}
+                />
+                
+                {/* Preview uploaded images */}
+                {newImages.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {newImages.map((image, index) => (
+                      <div key={index} className="relative group">
+                        <div className="relative h-24 bg-gray-700 rounded-lg overflow-hidden">
+                          <Image
+                            src={image}
+                            alt={`New ${imageType} photo ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => handleRemoveImage(index)}
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 bg-red-600 hover:bg-red-700 text-white rounded-full p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setIsAddImagesModalOpen(false)}
+                  variant="outline"
+                  className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveImages}
+                  disabled={newImages.length === 0}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Save Images ({newImages.length})
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }
