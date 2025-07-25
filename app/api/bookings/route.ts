@@ -185,15 +185,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert IST time to UTC for proper storage
-    const bookingDateTime = new Date(`${date}T${time}:00+05:30`)
+    // Create IST datetime and convert to UTC for database storage
+    // User input is assumed to be in IST timezone
+    const [year, month, day] = date.split('-').map(Number)
+    const [hours, minutes] = time.split(':').map(Number)
     
-    // Validate date is not in the past (compare in IST)
-    const nowIST = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })
-    const currentDateTimeIST = new Date(nowIST)
-    const requestedDateTimeIST = new Date(`${date}T${time}:00`)
+    // Create date in IST (UTC+5:30)
+    const istDate = new Date()
+    istDate.setUTCFullYear(year)
+    istDate.setUTCMonth(month - 1) // Month is 0-indexed
+    istDate.setUTCDate(day)
+    istDate.setUTCHours(hours - 5) // Convert IST to UTC by subtracting 5 hours
+    istDate.setUTCMinutes(minutes - 30) // Subtract 30 minutes for IST offset
+    istDate.setUTCSeconds(0)
+    istDate.setUTCMilliseconds(0)
     
-    if (requestedDateTimeIST < currentDateTimeIST) {
+    const bookingDateTime = istDate
+    
+    // Validate date is not in the past (compare in UTC)
+    const now = new Date()
+    if (bookingDateTime < now) {
       return NextResponse.json(
         { success: false, error: 'Cannot book for past dates' },
         { status: 400 }
