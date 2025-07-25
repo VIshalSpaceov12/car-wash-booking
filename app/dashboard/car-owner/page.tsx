@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import BookingModal from '@/components/booking/BookingModal'
 import ReviewModal from '@/components/review/ReviewModal'
+import BookingGalleryModal from '@/components/gallery/BookingGalleryModal'
+import ShopGalleryModal from '@/components/gallery/ShopGalleryModal'
 import { 
   Car, 
   MapPin, 
@@ -19,7 +21,9 @@ import {
   Heart,
   Zap,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Images,
+  Eye
 } from 'lucide-react'
 import Image from 'next/image'
 import { formatBookingDate, formatBookingTime } from '@/lib/utils'
@@ -35,6 +39,10 @@ export default function CarOwnerDashboard() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
   const [selectedBookingForReview, setSelectedBookingForReview] = useState<any>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  const [selectedBookingForGallery, setSelectedBookingForGallery] = useState<any>(null)
+  const [isGalleryModalOpen, setIsGalleryModalOpen] = useState(false)
+  const [selectedShopForGallery, setSelectedShopForGallery] = useState<any>(null)
+  const [isShopGalleryModalOpen, setIsShopGalleryModalOpen] = useState(false)
 
   // Expand/collapse state for booking sections
   const [isUpcomingExpanded, setIsUpcomingExpanded] = useState(true)
@@ -233,6 +241,26 @@ export default function CarOwnerDashboard() {
   const closeReviewModal = () => {
     setIsReviewModalOpen(false)
     setSelectedBookingForReview(null)
+  }
+
+  const handleViewGallery = (booking: any) => {
+    setSelectedBookingForGallery(booking)
+    setIsGalleryModalOpen(true)
+  }
+
+  const closeGalleryModal = () => {
+    setIsGalleryModalOpen(false)
+    setSelectedBookingForGallery(null)
+  }
+
+  const handleViewShopGallery = (shop: any) => {
+    setSelectedShopForGallery(shop)
+    setIsShopGalleryModalOpen(true)
+  }
+
+  const closeShopGalleryModal = () => {
+    setIsShopGalleryModalOpen(false)
+    setSelectedShopForGallery(null)
   }
 
   const handleReviewSubmitted = () => {
@@ -595,13 +623,24 @@ export default function CarOwnerDashboard() {
                           )}
                         </div>
                       </div>
-                      <Button 
-                        onClick={() => handleBookNow(shop)}
-                        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Book Now
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => handleViewShopGallery(shop)}
+                          variant="outline"
+                          className="flex-1 border-gray-600 text-gray-300 hover:bg-purple-500/10 hover:border-purple-500 hover:text-purple-300"
+                          title="View Gallery"
+                        >
+                          <Images className="w-4 h-4 mr-2" />
+                          Gallery
+                        </Button>
+                        <Button 
+                          onClick={() => handleBookNow(shop)}
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Book Now
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -691,6 +730,26 @@ export default function CarOwnerDashboard() {
                             }`}>
                               {booking.status}
                             </div>
+                            <Button
+                              onClick={() => handleViewGallery(booking)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 text-xs"
+                              title="View Gallery"
+                            >
+                              <Images className="w-3 h-3 mr-1" />
+                              Gallery
+                            </Button>
+                            {booking.status === 'completed' && (
+                              <Button
+                                onClick={() => handleRateService(booking)}
+                                size="sm"
+                                className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-xs"
+                              >
+                                <Star className="w-3 h-3 mr-1" />
+                                Rate
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -758,6 +817,16 @@ export default function CarOwnerDashboard() {
                             }`}>
                               {booking.status}
                             </div>
+                            <Button
+                              onClick={() => handleViewGallery(booking)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-purple-400 hover:text-purple-300 hover:bg-purple-500/10 text-xs"
+                              title="View Gallery"
+                            >
+                              <Images className="w-3 h-3 mr-1" />
+                              Gallery
+                            </Button>
                             {booking.status === 'completed' && (
                               <Button
                                 onClick={() => handleRateService(booking)}
@@ -841,6 +910,20 @@ export default function CarOwnerDashboard() {
         onClose={closeReviewModal}
         booking={selectedBookingForReview}
         onReviewSubmitted={handleReviewSubmitted}
+      />
+
+      {/* Gallery Modal */}
+      <BookingGalleryModal
+        isOpen={isGalleryModalOpen}
+        onClose={closeGalleryModal}
+        booking={selectedBookingForGallery}
+      />
+
+      {/* Shop Gallery Modal */}
+      <ShopGalleryModal
+        isOpen={isShopGalleryModalOpen}
+        onClose={closeShopGalleryModal}
+        shop={selectedShopForGallery}
       />
     </div>
   )

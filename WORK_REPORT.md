@@ -51,3 +51,21 @@
 - **Components**: BookingGallery.tsx with 450+ lines of functionality  
 - **API**: Image upload with authentication and validation
 - **Build Status**: Production-ready with all pages generated successfully
+
+## 25/07/2025 - Timezone & Gallery Viewing System
+
+### Completed Tasks ✅
+- Fixed critical timezone issue affecting booking time display (11:00 AM showing as 4:30)
+- Created proper IST to UTC conversion for database storage with +05:30 offset handling
+- Updated `formatBookingTime()` and `formatBookingDate()` utilities for consistent Asia/Kolkata timezone
+- Added Gallery viewing functionality for car owners on booking cards with purple-themed buttons
+- Implemented BookingGalleryModal.tsx for viewing before/after photos from completed services
+- Created ShopGalleryModal.tsx for previewing shop work samples before booking
+- Built `/api/shops/[id]/gallery` endpoint aggregating all shop images from completed bookings
+- Added dual-button layout (Gallery | Book Now) on shop cards in Book Service tab
+
+### Technical Details
+- **Timezone**: Fixed UTC storage with proper IST conversion using manual offset calculation
+- **Gallery Components**: Two specialized modals - booking history and shop preview galleries
+- **API**: Gallery endpoint fetches all before/after images from shop's completed bookings
+- **Build Status**: Successfully compiled with gallery components, 26 routes generated
