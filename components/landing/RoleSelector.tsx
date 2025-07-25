@@ -6,8 +6,8 @@ import { Car, Store, ArrowRight, CheckCircle } from 'lucide-react'
 
 export function RoleSelector() {
   const handleRoleSelection = (role: 'car-owner' | 'shop-owner') => {
-    // TODO: Implement navigation to appropriate onboarding flow
-    console.log(`Selected role: ${role}`)
+    // Navigate to sign up with role parameter
+    window.location.href = `/auth/signup?role=${role}`
   }
 
   return (
