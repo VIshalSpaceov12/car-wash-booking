@@ -39,6 +39,7 @@ import ImageUpload from '@/components/ui/ImageUpload'
 import ReviewManagement from '@/components/review/ReviewManagement'
 import BookingGallery from '@/components/gallery/BookingGallery'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { formatBookingDate, formatBookingTime } from '@/lib/utils'
 
 export default function ShopOwnerDashboard() {
   const { data: session } = useSession()
@@ -707,15 +708,11 @@ export default function ShopOwnerDashboard() {
                             <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                                {formatBookingDate(booking.scheduledAt)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true 
-                                })}
+                                {formatBookingTime(booking.scheduledAt)}
                               </div>
                             </div>
                           </div>
@@ -789,15 +786,11 @@ export default function ShopOwnerDashboard() {
                             <div className="flex items-center gap-4 text-sm text-gray-400 mt-1">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                                {formatBookingDate(booking.scheduledAt)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true 
-                                })}
+                                {formatBookingTime(booking.scheduledAt)}
                               </div>
                             </div>
                           </div>
@@ -1378,11 +1371,11 @@ export default function ShopOwnerDashboard() {
               </div>
               <div>
                 <span className="font-semibold text-gray-300">Date:</span>
-                <span className="ml-2 text-white">{new Date(selectedBooking.scheduledAt).toLocaleDateString()}</span>
+                <span className="ml-2 text-white">{formatBookingDate(selectedBooking.scheduledAt)}</span>
               </div>
               <div>
                 <span className="font-semibold text-gray-300">Time:</span>
-                <span className="ml-2 text-white">{new Date(selectedBooking.scheduledAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                <span className="ml-2 text-white">{formatBookingTime(selectedBooking.scheduledAt)}</span>
               </div>
               <div>
                 <span className="font-semibold text-gray-300">Amount:</span>
