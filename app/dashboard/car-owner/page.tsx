@@ -22,6 +22,7 @@ import {
   ChevronUp
 } from 'lucide-react'
 import Image from 'next/image'
+import { formatBookingDate, formatBookingTime } from '@/lib/utils'
 
 export default function CarOwnerDashboard() {
   const { data: session } = useSession()
@@ -667,15 +668,11 @@ export default function CarOwnerDashboard() {
                             <div className="flex items-center gap-4 text-sm text-gray-400">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                                {formatBookingDate(booking.scheduledAt)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true 
-                                })}
+                                {formatBookingTime(booking.scheduledAt)}
                               </div>
                             </div>
                           </div>
@@ -738,15 +735,11 @@ export default function CarOwnerDashboard() {
                             <div className="flex items-center gap-4 text-sm text-gray-400">
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleDateString()}
+                                {formatBookingDate(booking.scheduledAt)}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
-                                {new Date(booking.scheduledAt).toLocaleTimeString('en-US', { 
-                                  hour: 'numeric', 
-                                  minute: '2-digit', 
-                                  hour12: true 
-                                })}
+                                {formatBookingTime(booking.scheduledAt)}
                               </div>
                             </div>
                           </div>

@@ -4,3 +4,48 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+// Format date and time to display in consistent timezone (Indian Standard Time)
+export function formatBookingDateTime(dateString: string) {
+  const date = new Date(dateString)
+  
+  // Format date
+  const formattedDate = date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+  
+  // Format time
+  const formattedTime = date.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+  
+  return { formattedDate, formattedTime }
+}
+
+// Format just the time in IST
+export function formatBookingTime(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
+// Format just the date in IST
+export function formatBookingDate(dateString: string) {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
