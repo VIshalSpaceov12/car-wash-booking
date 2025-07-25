@@ -51,3 +51,40 @@
 - **Components**: BookingGallery.tsx with 450+ lines of functionality  
 - **API**: Image upload with authentication and validation
 - **Build Status**: Production-ready with all pages generated successfully
+
+## 25/07/2025 - Timezone & Gallery Viewing System
+
+### Completed Tasks ✅
+- Fixed critical timezone issue affecting booking time display (11:00 AM showing as 4:30)
+- Created proper IST to UTC conversion for database storage with +05:30 offset handling
+- Updated `formatBookingTime()` and `formatBookingDate()` utilities for consistent Asia/Kolkata timezone
+- Added Gallery viewing functionality for car owners on booking cards with purple-themed buttons
+- Implemented BookingGalleryModal.tsx for viewing before/after photos from completed services
+- Created ShopGalleryModal.tsx for previewing shop work samples before booking
+- Built `/api/shops/[id]/gallery` endpoint aggregating all shop images from completed bookings
+- Added dual-button layout (Gallery | Book Now) on shop cards in Book Service tab
+
+### Technical Details
+- **Timezone**: Fixed UTC storage with proper IST conversion using manual offset calculation
+- **Gallery Components**: Two specialized modals - booking history and shop preview galleries
+- **API**: Gallery endpoint fetches all before/after images from shop's completed bookings
+- **Build Status**: Successfully compiled with gallery components, 26 routes generated
+
+## 25/07/2025 - Slot Booking Validation System
+
+### Completed Tasks ✅
+- Implemented comprehensive slot booking validation to prevent double bookings
+- Added time slot conflict detection in `/api/bookings/route.ts` with database validation
+- Created conflict resolution system checking for existing PENDING/CONFIRMED/IN_PROGRESS bookings
+- Enhanced BookingModal.tsx with user-friendly error handling and validation messages
+- Added real-time error clearing when users change date/time selections
+- Fixed import errors in booking confirmation/cancellation API routes (prisma vs db imports)
+- Implemented privacy-conscious error messages without revealing customer names
+- Added proper HTTP 409 Conflict status codes for slot conflicts
+
+### Technical Details
+- **Backend Validation**: Database query checks same shop + time slot conflicts
+- **Frontend UX**: Red alert boxes with clear validation messages and auto-clearing errors
+- **Privacy Protection**: Removed customer name disclosure from conflict messages
+- **Error Handling**: Comprehensive try-catch with specific 409 status for conflicts
+- **Build Status**: Successfully compiled without warnings, all routes functional

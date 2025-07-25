@@ -271,6 +271,27 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Check for time slot conflicts - no two bookings for the same shop at the same time
+      const conflictingBooking = await prisma.booking.findFirst({
+        where: {
+          shopOwnerId: shopId,
+          scheduledAt: bookingDateTime,
+          status: {
+            in: ['PENDING', 'CONFIRMED', 'IN_PROGRESS'] // Only check active bookings
+          }
+        }
+      })
+
+      if (conflictingBooking) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'This time slot is already booked. Please choose a different time.'
+          },
+          { status: 409 } // 409 Conflict status code
+        )
+      }
+
       // Create the booking
       const newBooking = await prisma.booking.create({
         data: {
@@ -279,7 +300,7 @@ export async function POST(request: NextRequest) {
           serviceId: serviceId,
           vehicleId: vehicle.id,
           scheduledAt: bookingDateTime,
-          status: 'CONFIRMED',
+          status: 'PENDING',
           totalAmount: service.price,
           notes: notes || null
         },

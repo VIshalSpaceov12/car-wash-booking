@@ -65,6 +65,7 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
   const [notes, setNotes] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLoadingVehicles, setIsLoadingVehicles] = useState(false)
+  const [error, setError] = useState('')
   const [step, setStep] = useState<'select-service' | 'select-vehicle' | 'booking-details' | 'confirmation'>('select-service')
 
   // Fetch vehicles when modal opens
@@ -112,6 +113,8 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
     if (!selectedService || !selectedVehicle || !bookingDate || !bookingTime) return
 
     setIsLoading(true)
+    setError('') // Clear any previous errors
+    
     try {
       const response = await fetch('/api/bookings', {
         method: 'POST',
@@ -133,11 +136,12 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
       if (data.success) {
         setStep('confirmation')
       } else {
-        alert('Booking failed: ' + data.error)
+        // Handle different error types
+        setError(data.error || 'Booking failed. Please try again.')
       }
     } catch (error) {
       console.error('Booking error:', error)
-      alert('An error occurred while booking. Please try again.')
+      setError('An error occurred while booking. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -150,6 +154,7 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
     setBookingDate('')
     setBookingTime('')
     setNotes('')
+    setError('')
     setStep('select-service')
   }
 
@@ -434,7 +439,10 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
                   type="date"
                   min={today}
                   value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
+                  onChange={(e) => {
+                    setBookingDate(e.target.value)
+                    setError('') // Clear error when date changes
+                  }}
                   className="bg-gray-700 border-gray-600 text-white"
                   required
                 />
@@ -445,7 +453,10 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
                 <select
                   id="time"
                   value={bookingTime}
-                  onChange={(e) => setBookingTime(e.target.value)}
+                  onChange={(e) => {
+                    setBookingTime(e.target.value)
+                    setError('') // Clear error when time changes
+                  }}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 >
@@ -471,6 +482,16 @@ export default function BookingModal({ isOpen, onClose, shop }: BookingModalProp
                 rows={3}
               />
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <p className="text-red-300 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">

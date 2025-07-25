@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LoadingState } from '@/components/ui/loading-state'
 import { User, Save, Loader2, Car, Store, Settings, Sparkles, Shield, Crown, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -199,11 +200,7 @@ export default function ProfilePage() {
   }
 
   if (status === 'loading' || loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-white text-lg">Loading...</div>
-      </div>
-    )
+    return <LoadingState fullScreen message="Loading profile..." />
   }
 
   if (!session) {

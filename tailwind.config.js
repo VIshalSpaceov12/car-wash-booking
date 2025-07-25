@@ -57,10 +57,31 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shimmer: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        wave: {
+          "0%, 100%": { backgroundPosition: "200% 0" },
+          "50%": { backgroundPosition: "-200% 0" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shimmer: "shimmer 2s infinite",
+        wave: "wave 2s ease-in-out infinite",
+        float: "float 3s ease-in-out infinite",
+      },
+      animationDelay: {
+        '200': '200ms',
+        '400': '400ms',
+        '500': '500ms',
+        '1000': '1000ms',
       },
     },
   },

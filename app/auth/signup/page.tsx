@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingState } from '@/components/ui/loading-state'
 import { Mail, Lock, User, ArrowRight, Car, Store, Phone } from 'lucide-react'
 import Image from 'next/image'
 
@@ -394,7 +395,7 @@ function SignUpForm() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingState fullScreen message="Loading sign up..." />}>
       <SignUpForm />
     </Suspense>
   )
