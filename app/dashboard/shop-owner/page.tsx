@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { LoadingState } from '@/components/ui/loading-state'
 import { 
   Store,
   TrendingUp,
@@ -377,6 +378,11 @@ export default function ShopOwnerDashboard() {
       console.error('Error deleting service:', error)
       alert('An error occurred while deleting the service')
     }
+  }
+
+  // Show full screen loader when initially loading
+  if (isLoading && stats.totalBookings === 0) {
+    return <LoadingState fullScreen message="Loading shop dashboard..." />
   }
 
   return (

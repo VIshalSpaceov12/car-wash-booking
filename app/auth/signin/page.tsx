@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingState } from '@/components/ui/loading-state'
 import { Mail, Lock, ArrowRight, Car, Store, Sparkles, Shield, Clock } from 'lucide-react'
 import Image from 'next/image'
 
@@ -260,7 +261,7 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<LoadingState fullScreen message="Loading sign in..." />}>
       <SignInForm />
     </Suspense>
   )

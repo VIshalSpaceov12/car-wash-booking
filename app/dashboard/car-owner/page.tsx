@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react'
 import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { LoadingState } from '@/components/ui/loading-state'
 import BookingModal from '@/components/booking/BookingModal'
 import ReviewModal from '@/components/review/ReviewModal'
 import BookingGalleryModal from '@/components/gallery/BookingGalleryModal'
@@ -279,6 +280,11 @@ export default function CarOwnerDashboard() {
       }
       fetchBookings()
     }
+  }
+
+  // Show full screen loader when initially loading
+  if (isLoading && shops.length === 0) {
+    return <LoadingState fullScreen message="Loading dashboard..." />
   }
 
   return (

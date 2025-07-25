@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingState } from '@/components/ui/loading-state'
 import VehicleForm from '@/components/forms/VehicleForm'
 import Image from 'next/image'
 import { 
@@ -170,6 +171,11 @@ export default function VehiclesPage() {
 
   const formatVehicleName = (vehicle: Vehicle) => {
     return `${vehicle.year} ${vehicle.make} ${vehicle.model}`
+  }
+
+  // Show full screen loader when initially loading
+  if (isLoading && vehicles.length === 0) {
+    return <LoadingState fullScreen message="Loading your vehicles..." />
   }
 
   return (
